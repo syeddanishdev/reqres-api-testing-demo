@@ -1,0 +1,363 @@
+{
+	"info": {
+		"_postman_id": "fbcf71d8-f08d-4ebb-96b1-d6602f4c585f",
+		"name": "ReqRes API Testing Demo",
+		"description": "A Postman collection for testing the ReqRes API, showcasing API testing with JavaScript, performance testing, reporting, and CI/CD integration. Includes x-api-key header, adjusted Create User test, and performance tests for response time and payload size.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "7415331"
+	},
+	"item": [
+		{
+			"name": "List Users",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Set base URL and log request time",
+							"pm.collectionVariables.set('baseUrl', 'https://reqres.in/api');",
+							"pm.collectionVariables.set('requestTime', new Date().toISOString());",
+							"// Ensure only required headers",
+							"pm.request.headers.upsert({key: 'x-api-key', value: 'reqres-free-v1'});",
+							"pm.request.headers.remove('Authorization');",
+							"pm.request.headers.remove('Ocp-Apim-Subscription-Key');",
+							"pm.request.headers.remove('Postman-Token');",
+							"console.log('Base URL set to:', pm.collectionVariables.get('baseUrl'));",
+							"console.log('Request headers:', pm.request.headers.toObject());",
+							"console.log('Request URL:', pm.variables.replaceIn('{{baseUrl}}/users'));"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Response time is less than 300ms', function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(300);",
+							"    console.log('Response time:', pm.response.responseTime, 'ms');",
+							"});",
+							"",
+							"pm.test('Response payload size is less than 10KB', function () {",
+							"    var sizeInBytes = pm.response.size().total;",
+							"    pm.expect(sizeInBytes).to.be.below(10000);",
+							"    console.log('Response payload size:', sizeInBytes, 'bytes');",
+							"});",
+							"",
+							"pm.test('Response contains users data', function () {",
+							"    pm.expect(pm.response.status, 'Unexpected status: ' + pm.response.status).to.not.equal(401);",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data').that.is.an('array');",
+							"    pm.expect(jsonData.data.length).to.be.greaterThan(0);",
+							"});",
+							"",
+							"pm.test('User ID is set for subsequent requests', function () {",
+							"    pm.expect(pm.response.status, 'Unexpected status: ' + pm.response.status).to.not.equal(401);",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data[0]).to.have.property('id');",
+							"    pm.collectionVariables.set('userId', Number(jsonData.data[0].id));",
+							"    pm.expect(pm.collectionVariables.get('userId')).to.be.a('number');",
+							"    console.log('User ID set to:', pm.collectionVariables.get('userId'));",
+							"});",
+							"",
+							"pm.test('No Missing API key error', function () {",
+							"    pm.expect(pm.response.text(), 'Unexpected Missing API key error: ' + pm.response.text()).to.not.include('Missing API key');",
+							"    console.log('Response body:', pm.response.text());",
+							"    console.log('Response headers:', pm.response.headers.toObject());",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "reqres-free-v1"
+					}
+				],
+				"url": "{{baseUrl}}/users"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Single User",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Ensure userId is set and is a number",
+							"pm.test('userId variable is set', function () {",
+							"    pm.expect(pm.collectionVariables.get('userId'), 'userId is not set. Run List Users first.').to.exist;",
+							"    pm.expect(pm.collectionVariables.get('userId')).to.be.a('number');",
+							"});",
+							"// Ensure only required headers",
+							"pm.request.headers.upsert({key: 'x-api-key', value: 'reqres-free-v1'});",
+							"pm.request.headers.remove('Authorization');",
+							"pm.request.headers.remove('Ocp-Apim-Subscription-Key');",
+							"pm.request.headers.remove('Postman-Token');",
+							"// Resolve and log the full request URL",
+							"const resolvedUrl = pm.variables.replaceIn('{{baseUrl}}/users/{{userId}}');",
+							"console.log('Resolved Request URL:', resolvedUrl);",
+							"console.log('Request headers:', pm.request.headers.toObject());"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Response time is less than 300ms', function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(300);",
+							"    console.log('Response time:', pm.response.responseTime, 'ms');",
+							"});",
+							"",
+							"pm.test('Response payload size is less than 10KB', function () {",
+							"    var sizeInBytes = pm.response.size().total;",
+							"    pm.expect(sizeInBytes).to.be.below(10000);",
+							"    console.log('Response payload size:', sizeInBytes, 'bytes');",
+							"});",
+							"",
+							"pm.test('Response contains correct user ID', function () {",
+							"    pm.expect(pm.response.status, 'Unexpected status: ' + pm.response.status).to.not.equal(401);",
+							"    var jsonData = pm.response.json();",
+							"    var userId = Number(pm.collectionVariables.get('userId'));",
+							"    pm.expect(jsonData.data.id).to.equal(userId);",
+							"});",
+							"",
+							"pm.test('Response has required user fields', function () {",
+							"    pm.expect(pm.response.status, 'Unexpected status: ' + pm.response.status).to.not.equal(401);",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data).to.have.property('email');",
+							"    pm.expect(jsonData.data).to.have.property('first_name');",
+							"    pm.expect(jsonData.data).to.have.property('last_name');",
+							"    pm.expect(jsonData.data).to.have.property('avatar');",
+							"});",
+							"",
+							"pm.test('No Missing API key error', function () {",
+							"    pm.expect(pm.response.text(), 'Unexpected Missing API key error: ' + pm.response.text()).to.not.include('Missing API key');",
+							"    console.log('Response body:', pm.response.text());",
+							"    console.log('Response headers:', pm.response.headers.toObject());",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "reqres-free-v1"
+					}
+				],
+				"url": "{{baseUrl}}/users/{{userId}}"
+			},
+			"response": []
+		},
+		{
+			"name": "Create User",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Generate dynamic user data",
+							"const randomString = Math.random().toString(36).substring(7);",
+							"pm.collectionVariables.set('newUser', JSON.stringify({",
+							"    name: 'Test User ' + randomString,",
+							"    job: 'QA Engineer'",
+							"}));",
+							"// Ensure only required headers",
+							"pm.request.headers.upsert({key: 'x-api-key', value: 'reqres-free-v1'});",
+							"pm.request.headers.upsert({key: 'Content-Type', value: 'application/json'});",
+							"pm.request.headers.remove('Authorization');",
+							"pm.request.headers.remove('Ocp-Apim-Subscription-Key');",
+							"pm.request.headers.remove('Postman-Token');",
+							"console.log('New user data:', pm.collectionVariables.get('newUser'));",
+							"console.log('Request headers:', pm.request.headers.toObject());",
+							"console.log('Request URL:', pm.variables.replaceIn('{{baseUrl}}/users'));"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 201', function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test('Response time is less than 300ms', function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(300);",
+							"    console.log('Response time:', pm.response.responseTime, 'ms');",
+							"});",
+							"",
+							"pm.test('Response payload size is less than 10KB', function () {",
+							"    var sizeInBytes = pm.response.size().total;",
+							"    pm.expect(sizeInBytes).to.be.below(10000);",
+							"    console.log('Response payload size:', sizeInBytes, 'bytes');",
+							"});",
+							"",
+							"pm.test('Response contains created user data', function () {",
+							"    pm.expect(pm.response.status, 'Unexpected status: ' + pm.response.status).to.not.equal(401);",
+							"    var jsonData = pm.response.json();",
+							"    var sentData = JSON.parse(pm.collectionVariables.get('newUser'));",
+							"    pm.expect(jsonData.job).to.equal(sentData.job);",
+							"    pm.expect(jsonData).to.have.property('id');",
+							"    pm.expect(jsonData).to.have.property('createdAt');",
+							"});",
+							"",
+							"pm.test('No Missing API key error', function () {",
+							"    pm.expect(pm.response.text(), 'Unexpected Missing API key error: ' + pm.response.text()).to.not.include('Missing API key');",
+							"    console.log('Response body:', pm.response.text());",
+							"    console.log('Response headers:', pm.response.headers.toObject());",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x-api-key",
+						"value": "reqres-free-v1"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{newUser}}"
+				},
+				"url": "{{baseUrl}}/users"
+			},
+			"response": []
+		},
+		{
+			"name": "Update User",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Update user data",
+							"const randomString = Math.random().toString(36).substring(7);",
+							"pm.collectionVariables.set('updatedUser', JSON.stringify({",
+							"    name: 'Updated User ' + randomString,",
+							"    job: 'Senior QA Engineer'",
+							"}));",
+							"// Ensure only required headers",
+							"pm.request.headers.upsert({key: 'x-api-key', value: 'reqres-free-v1'});",
+							"pm.request.headers.upsert({key: 'Content-Type', value: 'application/json'});",
+							"pm.request.headers.remove('Authorization');",
+							"pm.request.headers.remove('Ocp-Apim-Subscription-Key');",
+							"pm.request.headers.remove('Postman-Token');",
+							"console.log('Updated user data:', pm.collectionVariables.get('updatedUser'));",
+							"console.log('Request headers:', pm.request.headers.toObject());",
+							"console.log('Request URL:', pm.variables.replaceIn('{{baseUrl}}/users/{{userId}}'));"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Response time is less than 300ms', function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(300);",
+							"    console.log('Response time:', pm.response.responseTime, 'ms');",
+							"});",
+							"",
+							"pm.test('Response payload size is less than 10KB', function () {",
+							"    var sizeInBytes = pm.response.size().total;",
+							"    pm.expect(sizeInBytes).to.be.below(10000);",
+							"    console.log('Response payload size:', sizeInBytes, 'bytes');",
+							"});",
+							"",
+							"pm.test('Response contains updated user data', function () {",
+							"    pm.expect(pm.response.status, 'Unexpected status: ' + pm.response.status).to.not.equal(401);",
+							"    var jsonData = pm.response.json();",
+							"    var sentData = JSON.parse(pm.collectionVariables.get('updatedUser'));",
+							"    pm.expect(jsonData.name).to.equal(sentData.name);",
+							"    pm.expect(jsonData.job).to.equal(sentData.job);",
+							"});",
+							"",
+							"pm.test('No Missing API key error', function () {",
+							"    pm.expect(pm.response.text(), 'Unexpected Missing API key error: ' + pm.response.text()).to.not.include('Missing API key');",
+							"    console.log('Response body:', pm.response.text());",
+							"    console.log('Response headers:', pm.response.headers.toObject());",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x-api-key",
+						"value": "reqres-free-v1"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{updatedUser}}"
+				},
+				"url": "{{baseUrl}}/users/{{userId}}"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": ""
+		},
+		{
+			"key": "userId",
+			"value": ""
+		},
+		{
+			"key": "newUser",
+			"value": ""
+		},
+		{
+			"key": "updatedUser",
+			"value": ""
+		},
+		{
+			"key": "requestTime",
+			"value": ""
+		}
+	]
+}
