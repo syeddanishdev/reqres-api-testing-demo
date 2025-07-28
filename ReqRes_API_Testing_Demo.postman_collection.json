@@ -1,0 +1,237 @@
+{
+  "info": {
+    "name": "ReqRes API Testing Demo",
+    "description": "A Postman collection for testing the ReqRes API, showcasing API testing with JavaScript, reporting, and CI/CD integration.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List Users",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Set base URL and log request time",
+              "pm.collectionVariables.set('baseUrl', 'https://reqres.in/api');",
+              "pm.collectionVariables.set('requestTime', new Date().toISOString());"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response time is less than 300ms', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(300);",
+              "});",
+              "",
+              "pm.test('Response contains users data', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('data').that.is.an('array');",
+              "    pm.expect(jsonData.data.length).to.be.greaterThan(0);",
+              "});",
+              "",
+              "// Store first user ID for next request",
+              "var jsonData = pm.response.json();",
+              "if (jsonData.data.length > 0) {",
+              "    pm.collectionVariables.set('userId', jsonData.data[0].id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": ["{{baseUrl}}"],
+          "path": ["users"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Single User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains correct user ID', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.id).to.equal(pm.collectionVariables.get('userId'));",
+              "});",
+              "",
+              "pm.test('Response has required user fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.have.property('email');",
+              "    pm.expect(jsonData.data).to.have.property('first_name');",
+              "    pm.expect(jsonData.data).to.have.property('last_name');",
+              "    pm.expect(jsonData.data).to.have.property('avatar');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["users", "{{userId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create User",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Generate dynamic user data",
+              "const randomString = Math.random().toString(36).substring(7);",
+              "pm.collectionVariables.set('newUser', JSON.stringify({",
+              "    name: 'Test User ' + randomString,",
+              "    job: 'QA Engineer'",
+              "}));"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response contains created user data', function () {",
+              "    var jsonData = pm.response.json();",
+              "    var sentData = JSON.parse(pm.collectionVariables.get('newUser'));",
+              "    pm.expect(jsonData.name).to.equal(sentData.name);",
+              "    pm.expect(jsonData.job).to.equal(sentData.job);",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('createdAt');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{newUser}}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": ["{{baseUrl}}"],
+          "path": ["users"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update User",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Update user data",
+              "const randomString = Math.random().toString(36).substring(7);",
+              "pm.collectionVariables.set('updatedUser', JSON.stringify({",
+              "    name: 'Updated User ' + randomString,",
+              "    job: 'Senior QA Engineer'",
+              "}));"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains updated user data', function () {",
+              "    var jsonData = pm.response.json();",
+              "    var sentData = JSON.parse(pm.collectionVariables.get('updatedUser'));",
+              "    pm.expect(jsonData.name).to.equal(sentData.name);",
+              "    pm.expect(jsonData.job).to.equal(sentData.job);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{updatedUser}}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/users/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["users", "{{userId}}"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "newUser",
+      "value": ""
+    },
+    {
+      "key": "updatedUser",
+      "value": ""
+    },
+    {
+      "key": "requestTime",
+      "value": ""
+    }
+  ]
+}
